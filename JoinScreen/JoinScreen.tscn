@@ -1,0 +1,88 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://JoinScreen/JoinScreen.gd" type="Script" id=1]
+[ext_resource path="res://JoinScreen/JoinScreenTheme.tres" type="Theme" id=2]
+[ext_resource path="res://JoinScreen/Fonts/FiraSans-Bold.ttf" type="DynamicFontData" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+size = 50
+font_data = ExtResource( 3 )
+
+[node name="JoinScreen" type="ColorRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 2 )
+color = Color( 0.141176, 0.14902, 0.180392, 1 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+margin_top = 48.0
+margin_right = 1024.0
+margin_bottom = 148.0
+rect_min_size = Vector2( 0, 100 )
+custom_fonts/font = SubResource( 1 )
+text = "First Person Template"
+align = 1
+valign = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
+margin_top = 152.0
+margin_right = 1024.0
+margin_bottom = 552.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ColorRect" type="ColorRect" parent="VBoxContainer/CenterContainer"]
+margin_left = 162.0
+margin_right = 862.0
+margin_bottom = 400.0
+rect_min_size = Vector2( 700, 400 )
+color = Color( 0.1095, 0.116925, 0.15, 1 )
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/CenterContainer/ColorRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 150
+custom_constants/margin_top = 40
+custom_constants/margin_left = 150
+custom_constants/margin_bottom = 40
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Buttons" type="VBoxContainer" parent="VBoxContainer/CenterContainer/ColorRect/MarginContainer"]
+margin_left = 150.0
+margin_top = 40.0
+margin_right = 550.0
+margin_bottom = 360.0
+custom_constants/separation = 33
+alignment = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="JoinButton" type="Button" parent="VBoxContainer/CenterContainer/ColorRect/MarginContainer/Buttons"]
+margin_top = 81.0
+margin_right = 400.0
+margin_bottom = 143.0
+text = "Join Server"
+
+[node name="CreateServerButton" type="Button" parent="VBoxContainer/CenterContainer/ColorRect/MarginContainer/Buttons"]
+margin_top = 176.0
+margin_right = 400.0
+margin_bottom = 238.0
+text = "Create Server"
+[connection signal="pressed" from="VBoxContainer/CenterContainer/ColorRect/MarginContainer/Buttons/JoinButton" to="." method="_on_JoinButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/CenterContainer/ColorRect/MarginContainer/Buttons/CreateServerButton" to="." method="_on_CreateServerButton_pressed"]
