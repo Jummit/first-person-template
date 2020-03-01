@@ -49,7 +49,6 @@ func _physics_process(_delta):
 		vertical_velocity -= GRAVITY
 	move_and_slide(Vector3.UP * vertical_velocity, Vector3.UP)
 	
-	
 	var sprint_pressed := Input.is_action_pressed("sprint")
 	var moving = Vector3(movement_input.x, 0, movement_input.z).length() > 0 and is_on_floor()
 	var walking = moving and not sprint_pressed
@@ -89,17 +88,9 @@ func set_sneaking(to):
 
 
 func get_movement_input() -> Vector3:
-	var movement = Vector3()
-	
-	if Input.is_action_pressed("move_forward"):
-		movement.z = -1
-	if Input.is_action_pressed("move_back"):
-		movement.z = 1
-	if Input.is_action_pressed("move_right"):
-		movement.x = 1
-	if Input.is_action_pressed("move_left"):
-		movement.x = -1
-	
+	var movement := Vector3()
+	movement.z = Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
+	movement.x = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
 	return movement
 
 

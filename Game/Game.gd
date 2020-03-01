@@ -12,6 +12,15 @@ func _ready():
 		create_player(get_tree().get_network_unique_id())
 
 
+func _unhandled_input(event):
+	if event is InputEventKey:
+		if event.scancode == KEY_ESCAPE:
+			get_tree().quit()
+	if event is InputEventJoypadButton:
+		if event.button_index == JOY_BUTTON_11:
+			get_tree().quit()
+
+
 func _on_network_peer_connected(id):
 	if id != 1:
 		create_player(id)
