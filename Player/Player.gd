@@ -1,7 +1,6 @@
 extends KinematicBody
 
-onready var camera_socket := $CameraSocket
-onready var camera := $CameraSocket/Camera
+onready var camera := $Camera
 onready var animation_player := $AnimationPlayer
 onready var walk_player := $WalkPlayer
 onready var sprint_player := $SprintPlayer
@@ -70,8 +69,8 @@ func _physics_process(_delta):
 func _input(event):
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
 		rotate_y(-event.relative.x / MOUSE_SENSITIVITY)
-		camera_socket.rotate_x(-event.relative.y / MOUSE_SENSITIVITY)
-		camera_socket.rotation_degrees.x = clamp(camera_socket.rotation_degrees.x, -60, 60)
+		camera.rotate_x(-event.relative.y / MOUSE_SENSITIVITY)
+		camera.rotation_degrees.x = clamp(camera.rotation_degrees.x, -60, 60)
 		if connected_to_server:
 			rset_unreliable("rotation", rotation)
 
