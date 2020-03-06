@@ -3,7 +3,6 @@ extends KinematicBody
 onready var camera := $Camera
 onready var animation_player := $AnimationPlayer
 onready var walk_player := $WalkPlayer
-onready var sprint_player := $SprintPlayer
 onready var jump_player := $JumpPlayer
 onready var crosshair := $Crosshair
 
@@ -24,6 +23,7 @@ func _ready():
 	
 	if is_me:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		walk_player.play()
 	
 	camera.current = is_me
 	crosshair.visible = is_me
@@ -38,41 +38,34 @@ func _ready():
 
 
 func _physics_process(_delta):
-	var movement_input := get_movement_input() * get_movement_speed_multiplier()
-	move_and_collide(movement_input.rotated(Vector3.UP, rotation.y))
+	var movement_input := get_movement_input()
+	move_and_collide(movement_input.rotated(Vector3.UP, rotation.y) * get_movement_speed_multiplier())
+	
+	if is_on_floor():
+		vertical_velocity = -1
+	else:
+		vertical_velocity -= GRAVITY
 	
 	if is_on_floor() and Input.is_action_pressed("jump"):
 		vertical_velocity = JUMP_FORCE
 		jump_player.play()
-	else:
-		vertical_velocity -= GRAVITY
+	
 	move_and_slide(Vector3.UP * vertical_velocity, Vector3.UP)
 	
-	var sprint_pressed := Input.is_action_pressed("sprint")
-	var moving = Vector3(movement_input.x, 0, movement_input.z).length() > 0 and is_on_floor()
-	var walking = moving and not sprint_pressed
-	var sprinting = moving and sprint_pressed
-	if not moving:
-		walk_player.stop()
-		sprint_player.stop()
-	elif walking and not walk_player.playing:
-		walk_player.play()
-	elif sprinting and not sprint_player.playing:
-		sprint_player.play()
+	walk_player.stream_paused = movement_input.length() == 0 or not is_on_floor()
 	
-	set_sneaking(Input.is_action_pressed("sneak"))
+	self.sneaking = Input.is_action_pressed("sneak")
 	
-	if connected_to_server:
-		rset_unreliable("translation", translation)
+	replicate("translation")
 
 
 func _input(event):
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
 		rotate_y(-event.relative.x / MOUSE_SENSITIVITY)
 		camera.rotate_x(-event.relative.y / MOUSE_SENSITIVITY)
-		camera.rotation_degrees.x = clamp(camera.rotation_degrees.x, -60, 60)
-		if connected_to_server:
-			rset_unreliable("rotation", rotation)
+		camera.rotation_degrees.x = clamp(camera.rotation_degrees.x, -80, 90)
+		
+		replicate("rotation")
 
 
 func _on_connected_to_server():
@@ -95,3 +88,8 @@ func get_movement_input() -> Vector3:
 
 func get_movement_speed_multiplier() -> float:
 	return MOVEMENT_SPEED * (SPRINTING_MULTIPLIER if Input.is_action_pressed("sprint") else 1.0)
+
+
+func replicate(property : String) -> void:
+	if connected_to_server:
+		rset_unreliable(property, get(property))

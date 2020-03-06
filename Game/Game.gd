@@ -4,12 +4,13 @@ onready var players := $Players
 onready var server_camera := $ServerCamera
 
 func _ready():
+	server_camera.current = get_tree().is_network_server()
+	
+	if not get_tree().is_network_server():
+		spawn_player(get_tree().get_network_unique_id())
+	
 	get_tree().connect("network_peer_connected", self, "_on_network_peer_connected")
 	get_tree().connect("network_peer_disconnected", self, "_on_network_peer_disconnected")
-	
-	server_camera.current = get_tree().is_network_server()
-	if not get_tree().is_network_server():
-		create_player(get_tree().get_network_unique_id())
 
 
 func _unhandled_input(event):
@@ -23,7 +24,7 @@ func _unhandled_input(event):
 
 func _on_network_peer_connected(id):
 	if id != 1:
-		create_player(id)
+		spawn_player(id)
 
 
 func _on_network_peer_disconnected(id):
@@ -31,8 +32,8 @@ func _on_network_peer_disconnected(id):
 		players.get_node(str(id)).queue_free()
 
 
-func create_player(id : int):
+func spawn_player(player_id : int) -> void:
 	var new_player = preload("res://Player/Player.tscn").instance()
-	new_player.name = str(id)
-	new_player.network_id = id
+	new_player.name = str(player_id)
+	new_player.network_id = player_id
 	players.add_child(new_player)
