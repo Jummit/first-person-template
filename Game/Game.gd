@@ -1,10 +1,10 @@
 extends Spatial
 
 onready var players := $Players
-onready var server_camera := $ServerCamera
+onready var spectator_camera := $SpectatorCamera
 
 func _ready():
-	server_camera.current = get_tree().is_network_server()
+	spectator_camera.current = get_tree().is_network_server()
 	
 	if not get_tree().is_network_server():
 		spawn_player(get_tree().get_network_unique_id())
@@ -32,8 +32,15 @@ func _on_network_peer_disconnected(id):
 		players.get_node(str(id)).queue_free()
 
 
+func _on_Player_tree_exited(player):
+	if player.is_me:
+		spectator_camera.make_current()
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+
 func spawn_player(player_id : int) -> void:
 	var new_player = preload("res://Player/Player.tscn").instance()
 	new_player.name = str(player_id)
 	new_player.network_id = player_id
 	players.add_child(new_player)
+	new_player.connect("tree_exited", self, "_on_Player_tree_exited", [new_player])

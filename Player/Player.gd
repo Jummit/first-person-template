@@ -1,16 +1,17 @@
 extends KinematicBody
 
 onready var camera := $Camera
+onready var weapon_ray_cast := $Camera/WeaponRayCast
 onready var animation_player := $AnimationPlayer
 onready var walk_player := $WalkPlayer
-onready var jump_player := $JumpPlayer
+onready var shoot_player := $ShootPlayer
 onready var crosshair := $Crosshair
 
 var is_me := true
 var network_id := -1
-var connected_to_server := false
 var vertical_velocity := 0.0
 var sneaking := false setget set_sneaking
+var health := 100.0
 
 const GRAVITY := 0.2
 const JUMP_FORCE := 4.0
@@ -23,13 +24,14 @@ func _ready():
 	
 	if is_me:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		walk_player.play()
+		weapon_ray_cast.add_exception(self)
+		weapon_ray_cast.enabled = true
 	
 	camera.current = is_me
 	crosshair.visible = is_me
 	
-	set_process_input(is_me)
-	set_physics_process(is_me)
+	set_process_input(false)
+	set_physics_process(false)
 	
 	rset_config("translation", MultiplayerAPI.RPC_MODE_REMOTE)
 	rset_config("rotation", MultiplayerAPI.RPC_MODE_REMOTE)
@@ -48,11 +50,14 @@ func _physics_process(_delta):
 	
 	if is_on_floor() and Input.is_action_pressed("jump"):
 		vertical_velocity = JUMP_FORCE
-		jump_player.play()
+		rpc_unreliable("play_sound", "Jump")
 	
 	move_and_slide(Vector3.UP * vertical_velocity, Vector3.UP)
 	
-	walk_player.stream_paused = movement_input.length() == 0 or not is_on_floor()
+	if movement_input.length() > 0 and is_on_floor() and not walk_player.playing:
+		rpc_unreliable("play_sound", "Walk")
+	elif movement_input.length() == 0 or not is_on_floor():
+		rpc_unreliable("stop_walking")
 	
 	self.sneaking = Input.is_action_pressed("sneak")
 	
@@ -66,15 +71,21 @@ func _input(event):
 		camera.rotation_degrees.x = clamp(camera.rotation_degrees.x, -80, 90)
 		
 		replicate("rotation")
+	if event.is_action_pressed("fire_weapon"):
+		rpc_unreliable("play_sound", "Shoot")
+		var hit_object : Node = weapon_ray_cast.get_collider()
+		if hit_object and hit_object.has_method("damage"):
+			hit_object.rpc_unreliable("damage", 10.0)
 
 
 func _on_connected_to_server():
-	connected_to_server = true
+	set_process_input(is_me)
+	set_physics_process(is_me)
 
 
 func set_sneaking(to):
 	if sneaking != to:
-		$SneakPlayer.play()
+		rpc_unreliable("play_sound", "Sneak")
 		animation_player.play("Sneak" if to else "UnSneak")
 		sneaking = to
 
@@ -91,5 +102,18 @@ func get_movement_speed_multiplier() -> float:
 
 
 func replicate(property : String) -> void:
-	if connected_to_server:
-		rset_unreliable(property, get(property))
+	rset_unreliable(property, get(property))
+
+
+remotesync func damage(amount : float) -> void:
+	health -= amount
+	if health <= .0:
+		queue_free()
+
+
+remotesync func play_sound(sound : String) -> void:
+	get_node(sound + "Player").play()
+
+
+remotesync func stop_walking() -> void:
+	walk_player.stop()
